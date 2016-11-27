@@ -1,3 +1,7 @@
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/twhiston/simplexml_debug/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/twhiston/simplexml_debug/?branch=master)
+[![Code Coverage](https://scrutinizer-ci.com/g/twhiston/simplexml_debug/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/twhiston/simplexml_debug/?branch=master)
+[![Build Status](https://scrutinizer-ci.com/g/twhiston/simplexml_debug/badges/build.png?b=master)](https://scrutinizer-ci.com/g/twhiston/simplexml_debug/build-status/master)
+
 Why?
 ====
 

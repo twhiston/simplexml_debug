@@ -76,7 +76,7 @@ class SxmlDebug {
     $dump = '';
     // To what namespace does this attribute belong? Returns array( alias => URI )
     $ns = $item->getNamespaces(FALSE);
-    if ($ns) {
+    if (!empty($ns)) {
       $dump .= self::INDENT . self::INDENT . 'Namespace: \'' . reset($ns) .
                '\'' .
                PHP_EOL;
@@ -282,10 +282,6 @@ class SxmlDebug {
   public static function tree(\SimpleXMLElement $sxml,
                               $include_string_content = FALSE): string {
 
-    // Get all the namespaces declared at the *root* of this document
-    // All the items we're looking at are in the same document, so we only need do this once
-    //$doc_ns = $sxml->getDocNamespaces(false);
-
     $dump = '';
     // Note that the header is added at the end, so we can add stats
 
@@ -370,7 +366,7 @@ class SxmlDebug {
   private static function treeGetNamespaces(\SimpleXMLElement $item): array {
     // To what namespace does this element belong? Returns array( alias => URI )
     $item_ns = $item->getNamespaces(FALSE);
-    if (!$item_ns) {
+    if (empty($item_ns)) {
       $item_ns = ['' => NULL];
     }
 

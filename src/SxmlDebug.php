@@ -9,12 +9,68 @@
 namespace twhiston\simplexml_debug;
 
 
+/**
+ * Class SxmlDebug
+ *
+ * @package twhiston\simplexml_debug
+ */
 class SxmlDebug {
 
 
+  /**
+   * Character to use for indenting strings
+   */
   const INDENT = "\t";
+  /**
+   * How much of a string to extract
+   */
   const EXTRACT_SIZE = 15;
 
+  /**
+   * Output a summary of the node or list of nodes referenced by a particular
+   * SimpleXML object Rather than attempting a recursive inspection, presents
+   * statistics aimed at understanding what your SimpleXML code is doing.
+   *
+   * @param \SimpleXMLElement $sxml The object to inspect
+   * @return string output string
+   *
+   */
+  public static function dump(\SimpleXMLElement $sxml) {
+
+    $dump = '';
+    // Note that the header is added at the end, so we can add stats
+    $dump .= '[' . PHP_EOL;
+
+    // SimpleXML objects can be either a single node, or (more commonly) a list of 0 or more nodes
+    // I haven't found a reliable way of distinguishing between the two cases
+    // Note that for a single node, foreach($node) acts like foreach($node->children())
+    // Numeric array indexes, however, operate consistently: $node[0] just returns the node
+    $item_index = 0;
+    while (isset($sxml[$item_index])) {
+
+      /** @var \SimpleXMLElement $item */
+      $item = $sxml[$item_index];
+      $item_index++;
+
+      // It's surprisingly hard to find something which behaves consistently differently for an attribute and an element within SimpleXML
+      // The below relies on the fact that the DOM makes a much clearer distinction
+      // Note that this is not an expensive conversion, as we are only swapping PHP wrappers around an existing LibXML resource
+      if (dom_import_simplexml($item) instanceOf \DOMAttr) {
+        $dump .= self::dumpAddAttribute($item);
+      } else {
+        $dump .= self::dumpAddElement($item);
+      }
+    }
+    $dump .= ']' . PHP_EOL;
+
+    // Add on the header line, with the total number of items output
+    return self::getHeaderLine($item_index) . $dump;
+  }
+
+  /**
+   * @param \SimpleXMLElement $item
+   * @return string
+   */
   private static function dumpAddNamespace(\SimpleXMLElement $item): string {
 
     $dump = '';
@@ -37,6 +93,13 @@ class SxmlDebug {
     return $dump;
   }
 
+  /**
+   * @param      $title
+   * @param      $data
+   * @param int  $indent
+   * @param bool $backtick
+   * @return string
+   */
   private static function dumpGetLine($title,
                                       $data,
                                       $indent = 1,
@@ -46,6 +109,10 @@ class SxmlDebug {
            ($backtick ? '\'' : '') . PHP_EOL;
   }
 
+  /**
+   * @param \SimpleXMLElement $item
+   * @return string
+   */
   private static function dumpAddAttribute(\SimpleXMLElement $item): string {
 
     $dump = self::INDENT . 'Attribute {' . PHP_EOL;
@@ -60,6 +127,10 @@ class SxmlDebug {
 
   }
 
+  /**
+   * @param \SimpleXMLElement $item
+   * @return string
+   */
   private static function dumpAddElement(\SimpleXMLElement $item): string {
 
     $dump = self::INDENT . 'Element {' . PHP_EOL;
@@ -131,6 +202,10 @@ class SxmlDebug {
     return $dump . self::INDENT . '}' . PHP_EOL;
   }
 
+  /**
+   * @param \SimpleXMLElement $children
+   * @return string
+   */
   private static function dumpGetChildDetails(\SimpleXMLElement $children): string {
     // Count occurrence of child element names, rather than listing them all out
     $child_names = [];
@@ -158,6 +233,10 @@ class SxmlDebug {
     return $childrenString;
   }
 
+  /**
+   * @param \SimpleXMLElement $attributes
+   * @return string
+   */
   private static function dumpGetAttributeDetails(\SimpleXMLElement $attributes): string {
 // Attributes can't be duplicated, but I'm going to put them in alphabetical order
     $attribute_names = [];
@@ -174,51 +253,14 @@ class SxmlDebug {
     return $attString;
   }
 
+  /**
+   * @param $index
+   * @return string
+   */
   private static function getHeaderLine($index): string {
 
     return 'SimpleXML object (' . $index . ' item' .
            ($index > 1 ? 's' : '') . ')' . PHP_EOL;
-  }
-
-  /**
-   * Output a summary of the node or list of nodes referenced by a particular
-   * SimpleXML object Rather than attempting a recursive inspection, presents
-   * statistics aimed at understanding what your SimpleXML code is doing.
-   *
-   * @param \SimpleXMLElement $sxml The object to inspect
-   * @return string output string
-   *
-   */
-  public static function dump(\SimpleXMLElement $sxml) {
-
-    $dump = '';
-    // Note that the header is added at the end, so we can add stats
-    $dump .= '[' . PHP_EOL;
-
-    // SimpleXML objects can be either a single node, or (more commonly) a list of 0 or more nodes
-    // I haven't found a reliable way of distinguishing between the two cases
-    // Note that for a single node, foreach($node) acts like foreach($node->children())
-    // Numeric array indexes, however, operate consistently: $node[0] just returns the node
-    $item_index = 0;
-    while (isset($sxml[$item_index])) {
-
-      /** @var \SimpleXMLElement $item */
-      $item = $sxml[$item_index];
-      $item_index++;
-
-      // It's surprisingly hard to find something which behaves consistently differently for an attribute and an element within SimpleXML
-      // The below relies on the fact that the DOM makes a much clearer distinction
-      // Note that this is not an expensive conversion, as we are only swapping PHP wrappers around an existing LibXML resource
-      if (dom_import_simplexml($item) instanceOf \DOMAttr) {
-        $dump .= self::dumpAddAttribute($item);
-      } else {
-        $dump .= self::dumpAddElement($item);
-      }
-    }
-    $dump .= ']' . PHP_EOL;
-
-    // Add on the header line, with the total number of items output
-    return self::getHeaderLine($item_index) . $dump;
   }
 
   /**
@@ -300,6 +342,11 @@ class SxmlDebug {
   }
 
 
+  /**
+   * @param string $stringContent
+   * @param        $depth
+   * @return string
+   */
   private static function treeGetStringExtract(string $stringContent,
                                                $depth): string {
     $string_extract = preg_replace('/\s+/', ' ', trim($stringContent));
@@ -316,6 +363,10 @@ class SxmlDebug {
 
   }
 
+  /**
+   * @param \SimpleXMLElement $item
+   * @return array
+   */
   private static function treeGetNamespaces(\SimpleXMLElement $item): array {
     // To what namespace does this element belong? Returns array( alias => URI )
     $item_ns = $item->getNamespaces(FALSE);
@@ -336,6 +387,14 @@ class SxmlDebug {
     return array_merge($item_ns, $all_ns);
   }
 
+  /**
+   * @param \SimpleXMLElement $attributes
+   * @param string            $nsAlias
+   * @param int               $depth
+   * @param bool              $isCurrentNamespace
+   * @param bool              $includeStringContent
+   * @return string
+   */
   private static function treeProcessAttributes(\SimpleXMLElement $attributes,
                                                 string $nsAlias,
                                                 int $depth,
@@ -377,6 +436,14 @@ class SxmlDebug {
     return $dump;
   }
 
+  /**
+   * @param \SimpleXMLElement $children
+   * @param string            $nsAlias
+   * @param int               $depth
+   * @param bool              $isCurrentNamespace
+   * @param bool              $includeStringContent
+   * @return string
+   */
   private static function treeProcessChildren(\SimpleXMLElement $children,
                                               string $nsAlias,
                                               int $depth,

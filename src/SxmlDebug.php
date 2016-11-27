@@ -15,8 +15,9 @@ class SxmlDebug {
   const INDENT = "\t";
   const EXTRACT_SIZE = 15;
 
-  private static function AddNamespace(\SimpleXMLElement $item, &$dump) {
+  private static function dumpAddNamespace(\SimpleXMLElement $item): string {
 
+    $dump = '';
     // To what namespace does this attribute belong? Returns array( alias => URI )
     $ns = $item->getNamespaces(FALSE);
     if ($ns) {
@@ -32,44 +33,41 @@ class SxmlDebug {
                  PHP_EOL;
       }
     }
+
+    return $dump;
   }
 
-  private static function GetLine($title,
-                                  $data,
-                                  $indent = 1,
-                                  $backtick = TRUE) {
-
-    $indentString = '';
-    while ($indent > 0) {
-      $indentString .= self::INDENT;
-      --$indent;
-    }
-
-    return $indentString . $title . ': ' . ($backtick ? '\'' : '') . $data .
+  private static function dumpGetLine($title,
+                                      $data,
+                                      $indent = 1,
+                                      $backtick = TRUE): string {
+    return str_repeat(self::INDENT, $indent) . $title . ': ' .
+           ($backtick ? '\'' : '') . $data .
            ($backtick ? '\'' : '') . PHP_EOL;
   }
 
-  private static function AddAttribute(\SimpleXMLElement $item, &$dump) {
+  private static function dumpAddAttribute(\SimpleXMLElement $item): string {
 
-    $dump .= self::INDENT . 'Attribute {' . PHP_EOL;
+    $dump = self::INDENT . 'Attribute {' . PHP_EOL;
 
-    self::AddNamespace($item, $dump);
+    $dump .= self::dumpAddNamespace($item);
 
-    $dump .= self::GetLine('Name', $item->getName(), 2);
-    $dump .= self::GetLine('Value', (string) $item, 2);
+    $dump .= self::dumpGetLine('Name', $item->getName(), 2);
+    $dump .= self::dumpGetLine('Value', (string) $item, 2);
 
     $dump .= self::INDENT . '}' . PHP_EOL;
+    return $dump;
 
   }
 
-  private static function AddElement(\SimpleXMLElement $item, &$dump) {
+  private static function dumpAddElement(\SimpleXMLElement $item): string {
 
-    $dump .= self::INDENT . 'Element {' . PHP_EOL;
+    $dump = self::INDENT . 'Element {' . PHP_EOL;
 
-    self::AddNamespace($item, $dump);
+    $dump .= self::dumpAddNamespace($item);
 
-    $dump .= self::GetLine('Name', $item->getName(), 2);
-    $dump .= self::GetLine('String Content', (string) $item, 2);
+    $dump .= self::dumpGetLine('Name', $item->getName(), 2);
+    $dump .= self::dumpGetLine('String Content', (string) $item, 2);
 
     // Now some statistics about attributes and children, by namespace
 
@@ -114,26 +112,26 @@ class SxmlDebug {
                PHP_EOL;
 
       if (NULL !== $ns_uri) {
-        $dump .= self::GetLine('Namespace URI', $ns_uri, 3);
+        $dump .= self::dumpGetLine('Namespace URI', $ns_uri, 3);
       }
 
 
-      $dump .= self::GetLine('Children',
-                             self::GetChildDetails($children),
-                             3,
-                             FALSE);
+      $dump .= self::dumpGetLine('Children',
+                                 self::dumpGetChildDetails($children),
+                                 3,
+                                 FALSE);
 
 
-      $dump .= self::GetLine('Attributes',
-                             self::GetAttributeDetails($attributes),
-                             3,
-                             FALSE);
+      $dump .= self::dumpGetLine('Attributes',
+                                 self::dumpGetAttributeDetails($attributes),
+                                 3,
+                                 FALSE);
     }
 
-    $dump .= self::INDENT . '}' . PHP_EOL;
+    return $dump . self::INDENT . '}' . PHP_EOL;
   }
 
-  private static function GetChildDetails(\SimpleXMLElement $children) {
+  private static function dumpGetChildDetails(\SimpleXMLElement $children): string {
     // Count occurrence of child element names, rather than listing them all out
     $child_names = [];
     foreach ($children as $sx_child) {
@@ -160,7 +158,7 @@ class SxmlDebug {
     return $childrenString;
   }
 
-  private static function GetAttributeDetails(\SimpleXMLElement $attributes) {
+  private static function dumpGetAttributeDetails(\SimpleXMLElement $attributes): string {
 // Attributes can't be duplicated, but I'm going to put them in alphabetical order
     $attribute_names = [];
     foreach ($attributes as $sx_attribute) {
@@ -174,6 +172,12 @@ class SxmlDebug {
       $attString .= ' - ' . implode(', ', $attribute_names);
     }
     return $attString;
+  }
+
+  private static function getHeaderLine($index): string {
+
+    return 'SimpleXML object (' . $index . ' item' .
+           ($index > 1 ? 's' : '') . ')' . PHP_EOL;
   }
 
   /**
@@ -197,6 +201,7 @@ class SxmlDebug {
     // Numeric array indexes, however, operate consistently: $node[0] just returns the node
     $item_index = 0;
     while (isset($sxml[$item_index])) {
+
       /** @var \SimpleXMLElement $item */
       $item = $sxml[$item_index];
       $item_index++;
@@ -205,18 +210,15 @@ class SxmlDebug {
       // The below relies on the fact that the DOM makes a much clearer distinction
       // Note that this is not an expensive conversion, as we are only swapping PHP wrappers around an existing LibXML resource
       if (dom_import_simplexml($item) instanceOf \DOMAttr) {
-        self::AddAttribute($item, $dump);
+        $dump .= self::dumpAddAttribute($item);
       } else {
-        self::AddElement($item, $dump);
+        $dump .= self::dumpAddElement($item);
       }
     }
     $dump .= ']' . PHP_EOL;
 
     // Add on the header line, with the total number of items output
-    $dump = 'SimpleXML object (' . $item_index . ' item' .
-            ($item_index > 1 ? 's' : '') . ')' . PHP_EOL . $dump;
-
-    return $dump;
+    return self::getHeaderLine($item_index) . $dump;
   }
 
   /**
@@ -226,7 +228,7 @@ class SxmlDebug {
    * the XML itself. Additionally, the output format is designed as a hint of
    * the syntax needed to traverse the object.
    *
-   * @param \SimpleXMLElement $sxml The object to inspect
+   * @param \SimpleXMLElement $sxml                   The object to inspect
    * @param boolean           $include_string_content Default false. If true,
    *                                                  will summarise textual
    *                                                  content, as well as child
@@ -236,7 +238,7 @@ class SxmlDebug {
    *
    */
   public static function tree(\SimpleXMLElement $sxml,
-                              $include_string_content = FALSE) {
+                              $include_string_content = FALSE): string {
 
     // Get all the namespaces declared at the *root* of this document
     // All the items we're looking at are in the same document, so we only need do this once
@@ -291,45 +293,30 @@ class SxmlDebug {
     }
 
     // Add on the header line, with the total number of items output
-    $dump = 'SimpleXML object (' . $root_item_index . ' item' .
-            ($root_item_index > 1 ? 's' : '') . ')' . PHP_EOL . $dump;
-
+    $dump = self::getHeaderLine($root_item_index) . $dump;
 
     return $dump;
 
   }
 
 
-  /**
-   * @param $item
-   * @param $depth
-   * @param $include_string_content
-   * @return string
-   */
-  private static function recursivelyProcessNode($item,
-                                                 $depth,
-                                                 $include_string_content) {
-    $dump = '';
-
-    if ($include_string_content) {
-      // Show a chunk of the beginning of the content string, collapsing whitespace HTML-style
-      $string_content = (string) $item;
-
-      $string_extract = preg_replace('/\s+/', ' ', trim($string_content));
-      if (strlen($string_extract) > SxmlDebug::EXTRACT_SIZE) {
-        $string_extract = substr($string_extract, 0, SxmlDebug::EXTRACT_SIZE)
-                          . '...';
-      }
-
-      if (strlen($string_content) > 0) {
-        $dump .= str_repeat(SxmlDebug::INDENT, $depth)
-                 . '(string) '
-                 . "'$string_extract'"
-                 . ' (' . strlen($string_content) . ' chars)'
-                 . PHP_EOL;
-      }
+  private static function treeGetStringExtract(string $stringContent,
+                                               $depth): string {
+    $string_extract = preg_replace('/\s+/', ' ', trim($stringContent));
+    if (strlen($string_extract) > SxmlDebug::EXTRACT_SIZE) {
+      $string_extract = substr($string_extract, 0, SxmlDebug::EXTRACT_SIZE)
+                        . '...';
     }
+    return (strlen($stringContent) > 0) ?
+      str_repeat(SxmlDebug::INDENT, $depth)
+      . '(string) '
+      . "'$string_extract'"
+      . ' (' . strlen($stringContent) . ' chars)'
+      . PHP_EOL : '';
 
+  }
+
+  private static function treeGetNamespaces(\SimpleXMLElement $item): array {
     // To what namespace does this element belong? Returns array( alias => URI )
     $item_ns = $item->getNamespaces(FALSE);
     if (!$item_ns) {
@@ -346,94 +333,128 @@ class SxmlDebug {
 
     // Prioritise "current" namespace by merging into onto the beginning of the list
     // (it will be added to the beginning and the duplicate entry dropped)
-    $all_ns = array_merge($item_ns, $all_ns);
+    return array_merge($item_ns, $all_ns);
+  }
 
-    foreach ($all_ns as $ns_alias => $ns_uri) {
-      $children = $item->children($ns_alias, TRUE);
-      $attributes = $item->attributes($ns_alias, TRUE);
+  private static function treeProcessAttributes(\SimpleXMLElement $attributes,
+                                                string $nsAlias,
+                                                int $depth,
+                                                bool $isCurrentNamespace,
+                                                bool $includeStringContent): string {
+
+    $dump = '';
+    if (count($attributes) > 0) {
+      if (!$isCurrentNamespace) {
+        $dump .= str_repeat(self::INDENT, $depth)
+                 . "->attributes('$nsAlias', true)" . PHP_EOL;
+      }
+
+      foreach ($attributes as $sx_attribute) {
+        // Output the attribute
+        if ($isCurrentNamespace) {
+          // In current namespace
+          // e.g. ['attribName']
+          $dump .= str_repeat(self::INDENT, $depth)
+                   . "['" . $sx_attribute->getName() . "']"
+                   . PHP_EOL;
+          $string_display_depth = $depth + 1;
+        } else {
+          // After a call to ->attributes()
+          // e.g. ->attribName
+          $dump .= str_repeat(self::INDENT, $depth + 1)
+                   . '->' . $sx_attribute->getName()
+                   . PHP_EOL;
+          $string_display_depth = $depth + 2;
+        }
+
+        if ($includeStringContent) {
+          // Show a chunk of the beginning of the content string, collapsing whitespace HTML-style
+          $dump .= self::treeGetStringExtract((string) $sx_attribute,
+                                              $string_display_depth);
+        }
+      }
+    }
+    return $dump;
+  }
+
+  private static function treeProcessChildren(\SimpleXMLElement $children,
+                                              string $nsAlias,
+                                              int $depth,
+                                              bool $isCurrentNamespace,
+                                              bool $includeStringContent): string {
+
+    $dump = '';
+    if (count($children) > 0) {
+      if ($isCurrentNamespace) {
+        $display_depth = $depth;
+      } else {
+        $dump .= str_repeat(self::INDENT, $depth)
+                 . "->children('$nsAlias', true)" . PHP_EOL;
+        $display_depth = $depth + 1;
+      }
+
+      // Recurse through the children with headers showing how to access them
+      $child_names = [];
+      foreach ($children as $sx_child) {
+        // Below is a rather clunky way of saying $child_names[ $sx_child->getName() ]++;
+        // 	which avoids Notices about unset array keys
+        $child_node_name = $sx_child->getName();
+        if (array_key_exists($child_node_name, $child_names)) {
+          $child_names[$child_node_name]++;
+        } else {
+          $child_names[$child_node_name] = 1;
+        }
+
+        // e.g. ->Foo[0]
+        $dump .= str_repeat(self::INDENT, $display_depth)
+                 . '->' . $sx_child->getName()
+                 . '[' . ($child_names[$child_node_name] - 1) . ']'
+                 . PHP_EOL;
+
+        $dump .= self::recursivelyProcessNode(
+          $sx_child,
+          $display_depth + 1,
+          $includeStringContent
+        );
+      }
+    }
+    return $dump;
+  }
+
+  /**
+   * @param $item
+   * @param $depth
+   * @param $include_string_content
+   * @return string
+   */
+  private static function recursivelyProcessNode(\SimpleXMLElement $item,
+                                                 $depth,
+                                                 $include_string_content): string {
+
+    $dump = '';
+
+    if ($include_string_content) {
+      // Show a chunk of the beginning of the content string, collapsing whitespace HTML-style
+      $dump = self::treeGetStringExtract((string) $item, $depth);
+    }
+
+    $itemNs = self::treeGetNamespaces($item);
+    foreach ($itemNs as $ns_alias => $ns_uri) {
+
 
       // If things are in the current namespace, display them a bit differently
-      $is_current_namespace = ($ns_uri == reset($item_ns));
+      $is_current_namespace = ($ns_uri === reset($itemNs));
 
-      if (count($attributes) > 0) {
-        if (!$is_current_namespace) {
-          $dump .= str_repeat(SxmlDebug::INDENT, $depth)
-                   . "->attributes('$ns_alias', true)" . PHP_EOL;
-        }
-
-        foreach ($attributes as $sx_attribute) {
-          // Output the attribute
-          if ($is_current_namespace) {
-            // In current namespace
-            // e.g. ['attribName']
-            $dump .= str_repeat(SxmlDebug::INDENT, $depth)
-                     . "['" . $sx_attribute->getName() . "']"
-                     . PHP_EOL;
-            $string_display_depth = $depth + 1;
-          } else {
-            // After a call to ->attributes()
-            // e.g. ->attribName
-            $dump .= str_repeat(SxmlDebug::INDENT, $depth + 1)
-                     . '->' . $sx_attribute->getName()
-                     . PHP_EOL;
-            $string_display_depth = $depth + 2;
-          }
-
-          if ($include_string_content) {
-            // Show a chunk of the beginning of the content string, collapsing whitespace HTML-style
-            $string_content = (string) $sx_attribute;
-
-            $string_extract = preg_replace('/\s+/', ' ', trim($string_content));
-            if (strlen($string_extract) > SxmlDebug::EXTRACT_SIZE) {
-              $string_extract = substr($string_extract,
-                                       0,
-                                       SxmlDebug::EXTRACT_SIZE)
-                                . '...';
-            }
-
-            $dump .= str_repeat(SxmlDebug::INDENT, $string_display_depth)
-                     . '(string) '
-                     . "'$string_extract'"
-                     . ' (' . strlen($string_content) . ' chars)'
-                     . PHP_EOL;
-          }
-        }
-      }
-
-      if (count($children) > 0) {
-        if ($is_current_namespace) {
-          $display_depth = $depth;
-        } else {
-          $dump .= str_repeat(SxmlDebug::INDENT, $depth)
-                   . "->children('$ns_alias', true)" . PHP_EOL;
-          $display_depth = $depth + 1;
-        }
-
-        // Recurse through the children with headers showing how to access them
-        $child_names = [];
-        foreach ($children as $sx_child) {
-          // Below is a rather clunky way of saying $child_names[ $sx_child->getName() ]++;
-          // 	which avoids Notices about unset array keys
-          $child_node_name = $sx_child->getName();
-          if (array_key_exists($child_node_name, $child_names)) {
-            $child_names[$child_node_name]++;
-          } else {
-            $child_names[$child_node_name] = 1;
-          }
-
-          // e.g. ->Foo[0]
-          $dump .= str_repeat(SxmlDebug::INDENT, $display_depth)
-                   . '->' . $sx_child->getName()
-                   . '[' . ($child_names[$child_node_name] - 1) . ']'
-                   . PHP_EOL;
-
-          $dump .= SxmlDebug::recursivelyProcessNode(
-            $sx_child,
-            $display_depth + 1,
-            $include_string_content
-          );
-        }
-      }
+      $dump .= self::treeProcessAttributes($item->attributes($ns_alias, TRUE),
+                                           $ns_alias,
+                                           $depth,
+                                           $is_current_namespace,
+                                           $include_string_content);
+      $dump .= self::treeProcessChildren($item->children($ns_alias, TRUE),
+                                         $ns_alias,
+                                         $depth,
+                                         $is_current_namespace,
+                                         $include_string_content);
     }
 
     return $dump;

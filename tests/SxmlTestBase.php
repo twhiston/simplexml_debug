@@ -1,13 +1,18 @@
 <?php
 
-require_once 'src/simplexml_dump.php';
-require_once 'src/simplexml_tree.php';
+namespace twhiston\simplexml_debug\tests;
 
-class simplexml_dump_bootstrap extends PHPUnit_Framework_TestCase
+class SxmlTestBase extends \PHPUnit_Framework_TestCase
 {
-	public function setUp()
-	{
-		$this->simpleXML = simplexml_load_string('<?xml version="1.0" standalone="yes"?>
+
+  protected $simpleXML;
+
+  protected $simpleXML_default_NS;
+
+  protected $simpleXML_named_NS;
+
+  public function setUp() {
+    $this->simpleXML = simplexml_load_string('<?xml version="1.0" standalone="yes"?>
 			<movies>
 				<movie>
 					<title>PHP: Behind the Parser</title>
@@ -35,7 +40,7 @@ class simplexml_dump_bootstrap extends PHPUnit_Framework_TestCase
 			</movies>
 		');
 
-		$this->simpleXML_default_NS = simplexml_load_string('<?xml version="1.0" standalone="yes"?>
+    $this->simpleXML_default_NS = simplexml_load_string('<?xml version="1.0" standalone="yes"?>
 			<movies xmlns="https://github.com/IMSoP/simplexml_debug">
 				<movie>
 					<title>PHP: Behind the Parser</title>
@@ -63,7 +68,7 @@ class simplexml_dump_bootstrap extends PHPUnit_Framework_TestCase
 			</movies>
 		');
 
-		$this->simpleXML_named_NS = simplexml_load_string('<?xml version="1.0" standalone="yes"?>
+    $this->simpleXML_named_NS = simplexml_load_string('<?xml version="1.0" standalone="yes"?>
 			<movies xmlns:test="https://github.com/IMSoP/simplexml_debug">
 				<test:movie>
 					<test:title>PHP: Behind the Parser</test:title>
@@ -90,7 +95,6 @@ class simplexml_dump_bootstrap extends PHPUnit_Framework_TestCase
 				</test:movie>
 			</movies>
 		');
-	}
+  }
 }
 
-?>

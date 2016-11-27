@@ -1,20 +1,30 @@
 {
-	"name": "imsop/simplexml_debug",
-	"description": "Tools for debugging your code when working with PHP's SimpleXML functions.",
-	"authors": [{
-		"name": "Rowan Collins",
-		"homepage": "http://rwec.co.uk",
-		"role": "Lead"
-	},{
-		"name": "Josh Sherman",
-		"email": "josh@gravityblvd.com",
-		"homepage": "http://joshtronic.com",
-		"role": "Contributor"
-	}],
-	"autoload": {
-		"classmap": ["src/"]
-	},
-	"require-dev": {
-		"satooshi/php-coveralls": "dev-master"
-	}
+  "name": "twhiston/simplexml_debug",
+  "description": "OOP tools for debugging your code when working with PHP's SimpleXML functions.",
+  "authors": [
+    {
+      "name": "Rowan Collins",
+      "homepage": "http://rwec.co.uk",
+      "role": "Lead"
+    },
+    {
+      "name": "Josh Sherman",
+      "email": "josh@gravityblvd.com",
+      "homepage": "http://joshtronic.com",
+      "role": "Contributor"
+    },
+    {
+      "name": "Tom Whiston",
+      "email": "tom.whiston@gmail.com",
+      "homepage": "http://twhiston.com",
+      "role": "Contributor"
+    }
+  ],
+  "autoload": {
+    "psr-4": {"twhiston\\simplexml_debug\\": "src/"}
+  },
+  "require-dev": {
+    "satooshi/php-coveralls": "dev-master",
+    "phpunit/phpunit": "^5.6"
+  }
 }

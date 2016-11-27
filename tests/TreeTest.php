@@ -1,10 +1,21 @@
 <?php
 
-class simplexml_tree_Test extends simplexml_dump_bootstrap
-{
-	public function setUp()
-	{
-		$this->expected = "SimpleXML object (1 item)
+namespace twhiston\simplexml_debug\tests;
+
+require_once __DIR__.'/SxmlTestBase.php';
+
+use twhiston\simplexml_debug\SxmlDebug;
+
+class TreeTest extends SxmlTestBase {
+
+  protected $expected;
+
+  protected $expected_default_NS;
+
+  protected $expected_named_NS;
+
+  public function setUp() {
+    $this->expected = "SimpleXML object (1 item)
 [0] // <movies>
 	->movie[0]
 		->title[0]
@@ -24,7 +35,7 @@ class simplexml_tree_Test extends simplexml_dump_bootstrap
 			['type']
 ";
 
-		$this->expected_default_NS = "SimpleXML object (1 item)
+    $this->expected_default_NS = "SimpleXML object (1 item)
 [0] // <movies>
 	->movie[0]
 		->title[0]
@@ -44,7 +55,7 @@ class simplexml_tree_Test extends simplexml_dump_bootstrap
 			['type']
 ";
 
-		$this->expected_named_NS = "SimpleXML object (1 item)
+    $this->expected_named_NS = "SimpleXML object (1 item)
 [0] // <movies>
 	->children('test', true)
 		->movie[0]
@@ -67,27 +78,13 @@ class simplexml_tree_Test extends simplexml_dump_bootstrap
 					->type
 ";
 
-		parent::setUp();
-	}
+    parent::setUp();
+  }
 
-	public function testTree()
-	{
-		ob_start();
-		simplexml_tree($this->simpleXML);
-		$return = ob_get_contents();
-		ob_end_clean();
+  public function testTreeIncludeStringContent() {
+    $return = SxmlDebug::tree($this->simpleXML, TRUE);
 
-		$this->assertEquals($this->expected, $return);
-	}
-
-	public function testTreeIncludeStringContent()
-	{
-		ob_start();
-		simplexml_tree($this->simpleXML, true);
-		$return = ob_get_contents();
-		ob_end_clean();
-
-		$expected = "SimpleXML object (1 item)
+    $expected = "SimpleXML object (1 item)
 [0] // <movies>
 	(string) '' (9 chars)
 	->movie[0]
@@ -124,26 +121,23 @@ class simplexml_tree_Test extends simplexml_dump_bootstrap
 				(string) 'stars' (5 chars)
 ";
 
-		$this->assertEquals($expected, $return);
-	}
+    $this->assertEquals($expected, $return);
+  }
 
-	public function testTreeReturn()
-	{
-		$return = simplexml_tree($this->simpleXML, false, true);
-		$this->assertEquals($this->expected, $return);
-	}
+  public function testTreeReturn() {
+    $return = SxmlDebug::tree($this->simpleXML, FALSE);
+    $this->assertEquals($this->expected, $return);
+  }
 
-	public function testTreeWithDefaultNS()
-	{
-		$return = simplexml_tree($this->simpleXML_default_NS, false, true);
-		$this->assertEquals($this->expected_default_NS, $return);
-	}
+  public function testTreeWithDefaultNS() {
+    $return = SxmlDebug::tree($this->simpleXML_default_NS, FALSE);
+    $this->assertEquals($this->expected_default_NS, $return);
+  }
 
-	public function testTreeWithNamedNS()
-	{
-		$return = simplexml_tree($this->simpleXML_named_NS, false, true);
-		$this->assertEquals($this->expected_named_NS, $return);
-	}
+  public function testTreeWithNamedNS() {
+    $return = SxmlDebug::tree($this->simpleXML_named_NS, FALSE);
+    $this->assertEquals($this->expected_named_NS, $return);
+  }
 }
 
 ?>

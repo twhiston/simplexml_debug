@@ -26,6 +26,13 @@ Read the PHPDoc, and try it out, to see exactly how it works but to give you a t
 * Lists the total number of direct children (broken down by namespace) along with a summary of their names (e.g. the fact that there are 500 `Result` elements and 1 `Info` element).
 * Shows complete string content of a node, *including CDATA*.
 
+Changes
+-------
+
+* OOP style
+* Always returns the debug string, so you can print it in an appropriate way in your own program instead of a default echo
+
+
 Limitations and Warnings
 ------------------------
 
@@ -37,5 +44,6 @@ Who?
 ====
 
 This project was originated by Rowan Collins, AKA IMSoP. My homepage is at <http://rwec.co.uk>, and you can reach me by e-mail on the obvious addresses @ that domain.
+Turned into an OOP style by Tom Whiston <tom.whiston@gmail.com>
 
 The code here is free to use for any purpose whatsoever, but with a polite request that you treat it like Free Software, and a strong request that you don't pass it off as your own. I'm happy for you to take it away, improve it, use it for whatever you like, but I'd like you to credit me as the originator. I'd also be more than happy to hear what you do with it, and how you've improved on it.
